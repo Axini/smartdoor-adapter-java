@@ -1,0 +1,18 @@
+#!/bin/sh
+# Script to start the Java SmartDoor adapter.
+
+JAVA=/usr/bin/java
+
+WEBSOCKET_JARS=./jar/Java-WebSocket-1.5.2.jar
+SLF4J_JARS=./jar/slf4j-api-1.7.25.jar:./jar/slf4j-simple-1.7.25.jar
+PROTOBUF_JARS=./jar/protobuf-java-3.19.1.jar:./jar/pa-protobuf.jar:
+CLASS_PATH=.:$WEBSOCKET_JARS:$SLF4J_JARS:$PROTOBUF_JARS
+
+# We could also use CLASS_PATH=.:./jar/* but this is more explicit.
+
+# course02.axini.com: TOKEN of 16-Feb-2022 16:10, valid through 20-May-2022.
+NAME=smartdoor@zosterops
+URL=wss://course02.axini.com:443/adapters
+TOKEN=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2NTMwNTkzMjAsInN1YiI6InJ1eXNAYXhpbmkuY29tIiwiaXNzIjoidm1wdWJsaWNwcm9kMDEiLCJzY29wZSI6ImFkYXB0ZXIifQ.7sarIZLRLJINc4NyUaPenb63wEFB_GSAS3Gi4HFZKsQ
+
+$JAVA -cp $CLASS_PATH Adapter $NAME $URL $TOKEN

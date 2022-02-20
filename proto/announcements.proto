@@ -1,0 +1,7 @@
+syntax = "proto3";
+package PluginAdapter.Api;
+import "announcement.proto";
+
+message Announcements {
+  repeated Announcement announcements = 1;
+}
