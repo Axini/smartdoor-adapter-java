@@ -40,7 +40,6 @@ public class AdapterCore {
         if (state == State.DISCONNECTED) {
             logger.info("Connecting to AMP's broker.");
             brokerConnection.connect();
-
         } else {
             String message = "Adapter started while already connected.";
             logger.info(message);
@@ -79,12 +78,13 @@ public class AdapterCore {
         logger.info(message);
 
         handler.stop();
+        start(); // reconnect to AMP - keep the adapter alive
     }
 
     // Configuration received from AMP.
     // * configure the handler,
     // * start the handler,
-    // * send ready to AMP.
+    // * send ready to AMP (should be done by handler).
     public void onConfiguration(Configuration configuration) {
         if (state == State.ANNOUNCED) {
             handler.setConfiguration(configuration);
@@ -93,9 +93,7 @@ public class AdapterCore {
             logger.info("Connecting to the SUT.");
             handler.start();
 
-            logger.info("Sending Ready to AMP.");
-            sendReady();
-            state = State.READY;
+            // The handler should call sendReady() as it knows when it is ready.
 
         } else if (state == State.CONNECTED) {
             String message = "Configuration received from AMP while not yet announced.";
@@ -116,7 +114,7 @@ public class AdapterCore {
         if (state == State.READY) {
             // We do not check that the label is a stimulus.
             ByteString physicalLabel = handler.stimulate(label);
-            long timestamp = ProtobufAxini.timestamp();
+            long timestamp = AxiniProtobuf.timestamp();
             sendStimulus(label, physicalLabel, timestamp, correlationId);
 
         } else {
@@ -128,14 +126,11 @@ public class AdapterCore {
 
     // Reset message received from AMP.
     // * reset the handler,
-    // * send ready to AMP.
+    // * send ready to AMP (should be done by handler).
     public void onReset() {
         if (state == State.READY) {
             handler.reset();
-
-            logger.info("Sending Ready to AMP.");
-            sendReady();
-            state = State.READY;
+            // The handler should call sendReady() as it knows when it is ready.
 
         } else {
             String message = "Reset received from AMP while not ready.";
@@ -174,7 +169,7 @@ public class AdapterCore {
         else if (msg.hasLabel()) {
             Label label = msg.getLabel();
             // two extra spaces to allign log with SmartDoorConnection
-            logger.info("  Label received from AMP: " + label.getLabel());
+            logger.info("Label received from AMP: " + label.getLabel());
             long correlation_id = label.getCorrelationId();
             onLabel(label, correlation_id);
         }
@@ -207,14 +202,23 @@ public class AdapterCore {
     // We do not check whether the label is actual a response.
     public void sendResponse(Label label, ByteString physicalLabel,
                              long timestamp) {
+        logger.info("Sending response to AMP: " + label.getLabel());
         Label new_label =
-            ProtobufAxini.createLabel(label, physicalLabel, timestamp);
+            AxiniProtobuf.createLabel(label, physicalLabel, timestamp);
         sendLabel(new_label);
+    }
+
+    // Send ready message to AMP.
+    public void sendReady() {
+        logger.info("Sending Ready to AMP.");
+        sendMessage(AxiniProtobuf.createMsgReady());
+        state = State.READY;
     }
 
     // Send Error message to AMP (also callback for Handler).
     public void sendError(String errorMessage) {
-        Message message = ProtobufAxini.createMsgError(errorMessage);
+        logger.info("Sending Error to AMP and closing the connection.");
+        Message message = AxiniProtobuf.createMsgError(errorMessage);
         sendMessage(message);
         brokerConnection.close(1000, errorMessage); // 1000 is normal closure
     }
@@ -223,27 +227,24 @@ public class AdapterCore {
     // We do not check that the label is a stimulus.
     private void sendStimulus(Label label, ByteString physicalLabel,
                               long timestamp, long correlationId) {
-        Label new_label = ProtobufAxini.createLabel(label, physicalLabel,
+        logger.info("Sending stimulus (back) to AMP: " + label.getLabel());
+        Label new_label = AxiniProtobuf.createLabel(label, physicalLabel,
                                                     timestamp, correlationId);
         sendLabel(new_label);
     }
 
     private void sendLabel(Label label) {
-        Message message = ProtobufAxini.createMsgLabel(label);
+        // logger.info("Sending label to AMP: " + label.getLabel());
+        Message message = AxiniProtobuf.createMsgLabel(label);
         sendMessage(message);
     }
 
     // Send announcement to AMP.
     private void sendAnnouncement(String name, List<Label> supportedLabels,
                                   Configuration configuration) {
-        Message message = ProtobufAxini.createMsgAnnouncement(name,
+        Message message = AxiniProtobuf.createMsgAnnouncement(name,
                                             supportedLabels, configuration);
         sendMessage(message);
-    }
-
-    // Send ready message to AMP.
-    private void sendReady() {
-        sendMessage(ProtobufAxini.createMsgReady());
     }
 
     // Send a Protobuf Message as a byte[] to AMP.

@@ -6,6 +6,7 @@ This is an initial version of the implementation; it is still work in progress.
 
 The organization and architecture of the Java adapter is strongly based on Axini's Ruby plugin-adapter-api version 4.x.
 
+
 # External libraries
 
 The ./jar directory contains several .jar files from external parties, which are used by the plugin adapter.
@@ -18,11 +19,9 @@ https://github.com/TooTallNate/Java-WebSocket
 ## Protocol Buffers
 https://developers.google.com/protocol-buffers
 
-./jar/protobuf-java-3.19.1.jar
+./jar/protobuf-java-3.21.11.jar
 
 The directory ./proto contains the Protobuf .proto files defining the Protobuf messages of Axini's 'Plugin Adapter Protocol'. 
-
-The directory ./protoc-3.19.1 contains an executable version of Google's protoc compiler 3.19.1 (for linux-x86_64). This protoc compiler is needed to compile .proto files to source files of the target programming language. 
 
 ## Simple Logging Facade For Java (SLF4J)
 https://www.slf4j.org/
@@ -32,21 +31,24 @@ https://www.slf4j.org/
 
 The file 'simplelogger.properties' contains the (formatting) settings of the logger.
 
+
 # Compilation
 
 The distribution contains a makefile with two targets: 
 
-* pa_protobuf.jar. This target calls the binary protoc compiler to generate Java support files for the Protobuf messages and compiles these Java into pa_protobuf.jar, which is placed into ./jar.
+* pa_protobuf.jar. To rebuild `pa_protobuf.jar`, Google's `protoc` compiler should be installed. This target calls the binary `protoc` compiler to generate Java support files for the Protobuf messages and compiles these Java into pa_protobuf.jar, which is placed into ./jar. 
 
 * adapter. After generating pa_protobuf.jar, the 'adapter' target can be used to compile all .java files into .class files.
 
 After building the makefile, the script ./adapter can be used to start the adapter.
 
+This Java adapter has been built succesfully on macOS 11.7.1 (Big Sur) using: Java openjdk 17.0.2 and Protobuf version 3.21.11.
+
+
 # Current limitations
 
 - Documentation is lacking. No javadoc comments for methods.
 - The Java application is developed by a non-native Java programmer; the application may include Ruby-style constructs.
-- The adapter stops after a single test run.
 - The application (esp. the AdapterCore class) is not yet Thread safe.
 - Error handling should be improved upon.
 - Virtual stimuli to inject bad weather behavior have to be added.

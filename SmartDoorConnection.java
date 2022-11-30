@@ -28,6 +28,7 @@ public class SmartDoorConnection extends WebSocketClient {
     public void onOpen(ServerHandshake handshake) {
         logger.info("Connected to SUT: " + getURI());
         handler.sendResetToSut();
+        handler.sendReadyToAmp();
     }
 
     @Override
@@ -41,7 +42,7 @@ public class SmartDoorConnection extends WebSocketClient {
     public void onMessage(String message) {
         logger.info("received from SUT: " + message);
         if (handler != null)
-            handler.sendResponse(message);
+            handler.sendResponseToAmp(message);
     }
 
     @Override

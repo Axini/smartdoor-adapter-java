@@ -1,4 +1,4 @@
-PROTOC   = ../protoc-3.19.1/bin/protoc
+PROTOC   = /usr/local/bin/protoc
 JAVA_OUT = --java_out=./..
 
 protobuf_java:

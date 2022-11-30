@@ -5,7 +5,7 @@ JAVA = /usr/bin/java
 
 WEBSOCKET_JARS = ./jar/Java-WebSocket-1.5.2.jar
 SLF4J_JARS = ./jar/slf4j-api-1.7.25.jar:./jar/slf4j-simple-1.7.25.jar
-PROTOBUF_JARS = ./jar/protobuf-java-3.19.1.jar:./jar/pa-protobuf.jar
+PROTOBUF_JARS = ./jar/protobuf-java-3.21.11.jar:./jar/pa-protobuf.jar
 CLASS_PATH = ".:$(WEBSOCKET_JARS):$(SLF4J_JARS):$(PROTOBUF_JARS)"
 
 # The following CLASS_PATH is also correct, but less explicit:
@@ -39,19 +39,35 @@ pa-protobuf.jar: classes
 	cd class; jar cf ../jar/pa-protobuf.jar PluginAdapter; cd ..
 
 TARGETS = Adapter.class AdapterCore.class BrokerConnection.class Handler.class \
-	ProtobufAxini.class SmartDoorHandler.class SmartDoorConnection.class
+	AxiniProtobuf.class SmartDoorHandler.class SmartDoorConnection.class
 
 adapter: $(TARGETS)
+all: pa-protobuf.jar adapter
+
+# ----- cleaning up
 
 clean:
 	rm -f *.class
 	rm -f -r ./class
+	rm -f VERSION.txt
 
 very_clean: clean
 	rm -f -r PluginAdapter
 
-ZIP = /usr/bin/zip
-ZIP_OPTIONS = -o -rp --exclude=*.git*
+# ----- make ZIP for distribution
 
-zip: very_clean
-	cd ..; $(ZIP) $(ZIP_OPTIONS) smartdoor-java.zip smartdoor-java; cd smartdoor-java
+ZIP = /usr/bin/zip
+ZIP_NAME = smartdoor-adapter-java.zip
+ZIP_OPTIONS = -o -rp -q --exclude=*.git*
+
+THIS_DATE=`date`
+THIS_COMMIT=`git rev-parse --short HEAD`
+
+VERSION.txt:
+	@echo "Version of this smartdoor-java adapter: " > $@
+	@echo "- created on: ${THIS_DATE}" >> $@
+	@echo "- latest git revision: ${THIS_COMMIT}" >> $@
+
+zip: very_clean pa-protobuf.jar adapter VERSION.txt
+	pushd ..; $(ZIP) $(ZIP_OPTIONS) $(ZIP_NAME) smartdoor-java; popd
+	rm -f VERSION.txt

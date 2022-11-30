@@ -4,6 +4,9 @@ import java.util.*;
 
 import com.google.protobuf.ByteString;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import PluginAdapter.Api.LabelOuterClass.*;
 import PluginAdapter.Api.LabelOuterClass.Label.*;
 import PluginAdapter.Api.ConfigurationOuterClass.*;
@@ -19,6 +22,9 @@ import PluginAdapter.Api.ConfigurationOuterClass.*;
 // TODO: the methods start, stop, reset and stimulate could fail; we should
 // add exception declarations to these methods.
 public abstract class Handler {
+    private static Logger logger =
+        LoggerFactory.getLogger(Handler.class);
+
     protected AdapterCore   adapterCore;
     protected Configuration configuration;
 

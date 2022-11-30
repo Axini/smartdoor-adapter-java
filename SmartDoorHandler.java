@@ -34,18 +34,18 @@ public class SmartDoorHandler extends Handler {
     // The default configuration for this adapter.
     public Configuration defaultConfiguration() {
         Configuration.Item url =
-            ProtobufAxini.createItem("url",
+            AxiniProtobuf.createItem("url",
                 "WebSocket URL of SmartDoor SUT", SMARTDOOR_URL);
 
         Configuration.Item manufacturer  =
-            ProtobufAxini.createItem("manufacturer",
+            AxiniProtobuf.createItem("manufacturer",
                 "SmartDoor manufacturer to test", SMARTDOOR_MANUFACTURER);
 
         List<Configuration.Item> items = new ArrayList<Configuration.Item>();
         items.add(url);
         items.add(manufacturer);
 
-        return ProtobufAxini.createConfiguration(items);
+        return AxiniProtobuf.createConfiguration(items);
     }
 
     // Prepare to start testing.
@@ -53,7 +53,7 @@ public class SmartDoorHandler extends Handler {
         if (connection == null) {
             try {
                 Configuration config = getConfiguration();
-                String url = ProtobufAxini.getStringFromConfig(config, "url");
+                String url = AxiniProtobuf.getStringFromConfig(config, "url");
                 logger.info("Trying to connect to SUT @ " + url);
                 URI serverUri = new URI(url);
                 connection = new SmartDoorConnection(serverUri);
@@ -72,6 +72,7 @@ public class SmartDoorHandler extends Handler {
     public void stop() {
         if (connection != null) {
             connection.close();
+            connection = null;
         }
     }
 
@@ -80,6 +81,7 @@ public class SmartDoorHandler extends Handler {
         // Try to reuse the WebSocket connection to the SUT.
         if (connection != null) {
             sendResetToSut();
+            sendReadyToAmp();
         } else {
             stop();
             start();
@@ -89,24 +91,30 @@ public class SmartDoorHandler extends Handler {
     // Stimulate the System Under Test with the stimulus.
     // Return the physical label.
     public ByteString stimulate(Label stimulus) {
+        logger.info("Sending stimulus to SUT: " + stimulus.getLabel());
         String sutMessage = labelToSutMessage(stimulus);
         connection.send(sutMessage);
         return ByteString.copyFromUtf8(sutMessage);
     }
 
     // Send a response to AMP.
-    public void sendResponse(String response) {
+    public void sendResponseToAmp(String response) {
         // ignore the response "RESET_PERFORMED"
         if (!response.equals(RESET_PERFORMED)) {
             Label label = sutMessageToLabel(response);
-            long timestamp = ProtobufAxini.timestamp();
+            long timestamp = AxiniProtobuf.timestamp();
             ByteString physicalLabel = ByteString.copyFromUtf8(response);
             adapterCore.sendResponse(label, physicalLabel, timestamp);
         }
     }
 
+    // Send Ready to AMP.
+    public void sendReadyToAmp() {
+        adapterCore.sendReady();
+    }
+
     // Send an error to AMP.
-    public void sendError(String message) {
+    public void sendErrorToAmp(String message) {
         adapterCore.sendError(message);
     }
 
@@ -114,7 +122,7 @@ public class SmartDoorHandler extends Handler {
     public void sendResetToSut() {
         Configuration config = getConfiguration();
         String manufacturer =
-            ProtobufAxini.getStringFromConfig(config, "manufacturer");
+            AxiniProtobuf.getStringFromConfig(config, "manufacturer");
         String resetString = RESET + ":" + manufacturer;
         connection.send(resetString);
         logger.info("Sent '" + resetString + "' to SUT");
@@ -144,28 +152,40 @@ public class SmartDoorHandler extends Handler {
         for (String name: RESPONSES)
             labels.add(response(name));
 
+        // extra stimulus to reset the SUT
+        labels.add(stimulus("reset", manufacturerParameter()));
+
         return labels;
     }
 
     // Some helper methods to construct Protobuf objects for supported labels.
 
     private static Label stimulus(String name) {
-        return ProtobufAxini.createStimulus(name, "door");
+        return AxiniProtobuf.createStimulus(name, "door");
     }
 
     private static Label stimulus(String name, List<Label.Parameter> params) {
-        return ProtobufAxini.createStimulus(name, "door", params);
+        return AxiniProtobuf.createStimulus(name, "door", params);
     }
 
     private static Label response(String name) {
-        return ProtobufAxini.createResponse(name, "door");
+        return AxiniProtobuf.createResponse(name, "door");
     }
 
     private static List<Label.Parameter> passcodeParameter() {
         List<Label.Parameter> list = new ArrayList<Label.Parameter>();
         Label.Parameter parameter =
-            ProtobufAxini.createParameter("passcode",
-                                          ProtobufAxini.createIntValue(0));
+            AxiniProtobuf.createParameter("passcode",
+                                          AxiniProtobuf.createIntValue(0));
+        list.add(parameter);
+        return list;
+    }
+
+    private static List<Label.Parameter> manufacturerParameter() {
+        List<Label.Parameter> list = new ArrayList<Label.Parameter>();
+        Label.Parameter parameter =
+            AxiniProtobuf.createParameter("manufacturer",
+                                          AxiniProtobuf.createStringValue(""));
         list.add(parameter);
         return list;
     }
@@ -180,12 +200,13 @@ public class SmartDoorHandler extends Handler {
     // Message to label converter.
     private static Label sutMessageToLabel(String message) {
         String response = message.toLowerCase();
-        return ProtobufAxini.createResponse(response, "door");
+        return AxiniProtobuf.createResponse(response, "door");
     }
 
     // Label to message converter.
     private static String labelToSutMessage(Label label) {
         String name = label.getLabel();
+        List<Label.Parameter> params;
         String sut_label = name.toUpperCase();
         String result = null;
         switch (name) {
@@ -195,9 +216,14 @@ public class SmartDoorHandler extends Handler {
                 break;
             case "lock":
             case "unlock":
-                List<Label.Parameter> params = label.getParametersList();
+                params = label.getParametersList();
                 long passcode = params.get(0).getValue().getInteger();
                 result = sut_label + ":" + passcode;
+                break;
+            case "reset":
+                params = label.getParametersList();
+                String manufacturer = params.get(0).getValue().getString();
+                result = sut_label + ":" + manufacturer;
                 break;
             default:
                 // This allows to send bad weather stimuli to the SUT.
