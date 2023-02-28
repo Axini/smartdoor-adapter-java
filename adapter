@@ -1,18 +1,23 @@
 #!/bin/sh
 # Script to start the Java SmartDoor adapter.
+# Only needed to construct the Java CLASS_PATH.
 
 JAVA=/usr/bin/java
 
 WEBSOCKET_JARS=./jar/Java-WebSocket-1.5.2.jar
 SLF4J_JARS=./jar/slf4j-api-1.7.25.jar:./jar/slf4j-simple-1.7.25.jar
-PROTOBUF_JARS=./jar/protobuf-java-3.21.11.jar:./jar/pa-protobuf.jar:
-CLASS_PATH=.:$WEBSOCKET_JARS:$SLF4J_JARS:$PROTOBUF_JARS
+PROTOBUF_JAR=./jar/protobuf-java-3.21.11.jar
+PA_PROTOBUF_JAR=./src/main/pa-protobuf.jar
 
 # We could also use CLASS_PATH=.:./jar/* but this is more explicit.
+CLASS_PATH=.:./src/main:$WEBSOCKET_JARS:$SLF4J_JARS:$PROTOBUF_JAR:$PA_PROTOBUF_JAR
 
-# course02.axini.com: TOKEN of 30-Nov-2022 12:15, valid through 3-Mar-2023.
-NAME=smartdoor-adapter-java@zosterops
+# The adapter should connect to a server running AMP, announce itself with a
+# name, and supply a valid adapter token. You should fill in your own adapter
+# configuration here.
+
+NAME=smartdoor-adapter-java@machine_name
 URL=wss://course02.axini.com:443/adapters
-TOKEN=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2Nzc4NDIwNjYsInN1YiI6InJ1eXNAYXhpbmkuY29tIiwiaXNzIjoidm1wdWJsaWNwcm9kMDEiLCJzY29wZSI6ImFkYXB0ZXIifQ.BGw5ERbHzhsFClXEM8F0xC2LNKf3Slyfyoscf8OMz6E
+TOKEN=adapter-token-from-AMP-adapter-page
 
 $JAVA -cp $CLASS_PATH Adapter $NAME $URL $TOKEN

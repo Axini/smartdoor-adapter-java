@@ -28,23 +28,15 @@ public class SmartDoorHandler extends Handler {
         this.connection = null;
     }
 
-    private static final String SMARTDOOR_URL          = "ws://localhost:3001";
-    private static final String SMARTDOOR_MANUFACTURER = "Axini";
+    private static final String SMARTDOOR_URL = "ws://localhost:3001";
 
     // The default configuration for this adapter.
     public Configuration defaultConfiguration() {
         Configuration.Item url =
             AxiniProtobuf.createItem("url",
                 "WebSocket URL of SmartDoor SUT", SMARTDOOR_URL);
-
-        Configuration.Item manufacturer  =
-            AxiniProtobuf.createItem("manufacturer",
-                "SmartDoor manufacturer to test", SMARTDOOR_MANUFACTURER);
-
         List<Configuration.Item> items = new ArrayList<Configuration.Item>();
         items.add(url);
-        items.add(manufacturer);
-
         return AxiniProtobuf.createConfiguration(items);
     }
 
@@ -120,10 +112,7 @@ public class SmartDoorHandler extends Handler {
 
     // Send reset to SUT.
     public void sendResetToSut() {
-        Configuration config = getConfiguration();
-        String manufacturer =
-            AxiniProtobuf.getStringFromConfig(config, "manufacturer");
-        String resetString = RESET + ":" + manufacturer;
+        String resetString = RESET;
         connection.send(resetString);
         logger.info("Sent '" + resetString + "' to SUT");
     }
@@ -153,7 +142,7 @@ public class SmartDoorHandler extends Handler {
             labels.add(response(name));
 
         // extra stimulus to reset the SUT
-        labels.add(stimulus("reset", manufacturerParameter()));
+        labels.add(stimulus("reset"));
 
         return labels;
     }
@@ -177,15 +166,6 @@ public class SmartDoorHandler extends Handler {
         Label.Parameter parameter =
             AxiniProtobuf.createParameter("passcode",
                                           AxiniProtobuf.createIntValue(0));
-        list.add(parameter);
-        return list;
-    }
-
-    private static List<Label.Parameter> manufacturerParameter() {
-        List<Label.Parameter> list = new ArrayList<Label.Parameter>();
-        Label.Parameter parameter =
-            AxiniProtobuf.createParameter("manufacturer",
-                                          AxiniProtobuf.createStringValue(""));
         list.add(parameter);
         return list;
     }
@@ -221,9 +201,7 @@ public class SmartDoorHandler extends Handler {
                 result = sut_label + ":" + passcode;
                 break;
             case "reset":
-                params = label.getParametersList();
-                String manufacturer = params.get(0).getValue().getString();
-                result = sut_label + ":" + manufacturer;
+                result = sut_label;
                 break;
             default:
                 // This allows to send bad weather stimuli to the SUT.

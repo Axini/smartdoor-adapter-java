@@ -50,7 +50,7 @@ public class SmartDoorConnection extends WebSocketClient {
         String message = "Exception occurred: " + ex;
         logger.info(message);
         if (handler != null)
-            handler.sendError(message);
+            handler.sendErrorToAmp(message);
         ex.printStackTrace();
     }
 

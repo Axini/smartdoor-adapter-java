@@ -3,10 +3,12 @@
 JAVAC = /usr/bin/javac
 JAVA = /usr/bin/java
 
-WEBSOCKET_JARS = ./jar/Java-WebSocket-1.5.2.jar
-SLF4J_JARS = ./jar/slf4j-api-1.7.25.jar:./jar/slf4j-simple-1.7.25.jar
-PROTOBUF_JARS = ./jar/protobuf-java-3.21.11.jar:./jar/pa-protobuf.jar
-CLASS_PATH = ".:$(WEBSOCKET_JARS):$(SLF4J_JARS):$(PROTOBUF_JARS)"
+JAR_DIR = ../../jar
+WEBSOCKET_JARS = $(JAR_DIR)/Java-WebSocket-1.5.2.jar
+SLF4J_JARS = $(JAR_DIR)/slf4j-api-1.7.25.jar:$(JAR_DIR)/slf4j-simple-1.7.25.jar
+PROTOBUF_JARS = $(JAR_DIR)/protobuf-java-3.21.11.jar
+PA_PROTOBUF_JAR = pa-protobuf.jar
+CLASS_PATH = ".:$(WEBSOCKET_JARS):$(SLF4J_JARS):$(PROTOBUF_JARS):$(PA_PROTOBUF_JAR)"
 
 # The following CLASS_PATH is also correct, but less explicit:
 # CLASS_PATH = ".:./jar/*"
@@ -36,7 +38,7 @@ classes: protobuf_java
 
 # Combine all .class files into a .jar file.
 pa-protobuf.jar: classes
-	cd class; jar cf ../jar/pa-protobuf.jar PluginAdapter; cd ..
+	cd class; jar cf ../pa-protobuf.jar PluginAdapter; cd ..
 
 TARGETS = Adapter.class AdapterCore.class BrokerConnection.class Handler.class \
 	AxiniProtobuf.class SmartDoorHandler.class SmartDoorConnection.class
@@ -52,6 +54,7 @@ clean:
 	rm -f VERSION.txt
 
 very_clean: clean
+	rm -r -r pa-protobuf.jar
 	rm -f -r PluginAdapter
 
 # ----- make ZIP for distribution
