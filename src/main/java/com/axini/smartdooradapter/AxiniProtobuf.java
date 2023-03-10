@@ -1,4 +1,4 @@
-// Copyright 2022 Axini B.V. https://www.axini.com, see: LICENSE.txt.
+package com.axini.smartdooradapter;
 
 import java.util.*;
 
@@ -29,7 +29,6 @@ public class AxiniProtobuf {
         EMPTY_ITEM_LIST = Collections.<Configuration.Item>emptyList();
 
     // Current time in nano seconds since EPOCH.
-    // TODO: try to also add nano seconds.
     public static long timestamp() {
         return System.currentTimeMillis() * 1000 * 1000;
     }
@@ -128,25 +127,20 @@ public class AxiniProtobuf {
             .build();
     }
 
-    // FIXME: or should we use some Date representation here?
     public static Label.Parameter.Value createDateValue(long value) {
         return Label.Parameter.Value.newBuilder()
             .setDate(value)
             .build();
     }
 
-    // FIXME: or should we use some Date representation here?
     public static Label.Parameter.Value createTimeValue(long value) {
         return Label.Parameter.Value.newBuilder()
             .setTime(value)
             .build();
     }
 
-    // TODO: add
-    // - createArrayValue
-    // - createStructValue
-    // - createHashValue
-    // But these are not needed for the SmartDoor exercise.
+    // Methods to create an array, struct are hash have not been added, as
+    // they are not needed for the SmartDoor application.
 
     // ------ Configuration
 
@@ -201,7 +195,7 @@ public class AxiniProtobuf {
             if (item.getKey().equals(key) && item.hasString())
                 return item.getString();
 
-        // TODO: we should proably throw an Exception here.
+        // Instead of returning an ERROR string, we should probably throw an Exception here.
         return "ERROR: key '" + key + "' is not key of String value";
     }
 
@@ -211,7 +205,7 @@ public class AxiniProtobuf {
             if (item.getKey().equals(key) && item.hasInteger())
                 return item.getInteger();
 
-        // TODO: we should probably throw an Exception here.
+        // Instead of returning 0, we should probably throw an Exception here.
         return 0;
     }
 

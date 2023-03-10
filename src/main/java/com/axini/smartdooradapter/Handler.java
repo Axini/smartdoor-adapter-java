@@ -1,4 +1,4 @@
-// Copyright 2022 Axini B.V. https://www.axini.com, see: LICENSE.txt
+package com.axini.smartdooradapter;
 
 import java.util.*;
 
@@ -18,9 +18,6 @@ import PluginAdapter.Api.ConfigurationOuterClass.*;
 // method should be called.
 //
 // Subclasses must provide all methods defined in this abstract superclass.
-//
-// TODO: the methods start, stop, reset and stimulate could fail; we should
-// add exception declarations to these methods.
 public abstract class Handler {
     private static Logger logger =
         LoggerFactory.getLogger(Handler.class);

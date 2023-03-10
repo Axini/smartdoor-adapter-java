@@ -1,4 +1,1 @@
-src/main/PluginAdapter
-src/main/class
-src/main/*.class
-src/main/pa-protobuf.jar
+target

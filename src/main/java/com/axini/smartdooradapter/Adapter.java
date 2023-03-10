@@ -1,4 +1,4 @@
-// Copyright 2022 Axini B.V. https://www.axini.com, see: LICENSE.txt.
+package com.axini.smartdooradapter;
 
 import java.net.URI;
 import java.net.URISyntaxException;
