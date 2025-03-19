@@ -6,6 +6,9 @@ import java.net.URISyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.axini.smartdooradapter.generic.*;
+import com.axini.smartdooradapter.smartdoor.*;
+
 // Adapter: starts the BrokerConnection and AdapterCore.
 public class Adapter {
     private static Logger logger = LoggerFactory.getLogger(Adapter.class);

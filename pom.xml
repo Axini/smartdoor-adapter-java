@@ -5,7 +5,7 @@
   <groupId>com.axini.smartdooradapter</groupId>
   <artifactId>smartdoor-adapter</artifactId>
   <packaging>jar</packaging>
-  <version>0.1</version>
+  <version>0.1.1</version>
 
   <name>smartdooradapter</name>
   <description>Plugin adapter to connect to standalone SmartDoor application.</description>
@@ -30,7 +30,7 @@
     <dependency>
       <groupId>org.java-websocket</groupId>
       <artifactId>Java-WebSocket</artifactId>
-      <version>1.5.3</version>
+      <version>1.5.7</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
@@ -51,14 +51,14 @@
     <dependency>
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
-        <version>3.21.11</version>
+        <version>4.29.3</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
     <dependency>
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java-util</artifactId>
-        <version>3.21.11</version>
+        <version>4.29.3</version>
     </dependency>
 
   </dependencies>

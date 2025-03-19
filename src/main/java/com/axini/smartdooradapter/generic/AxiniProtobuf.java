@@ -1,4 +1,4 @@
-package com.axini.smartdooradapter;
+package com.axini.smartdooradapter.generic;
 
 import java.util.*;
 

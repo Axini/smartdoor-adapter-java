@@ -79,6 +79,11 @@ https://www.slf4j.org/
 The file `./main/resources/simplelogger.properties` contains the (formatting) settings of the logger. This file is automatically copied to the resulting `jar` file of the SmartDoor application.
 
 
+# Some notes on the implementation
+
+The source code of the adapter can be found in the subdirectory `src/main/java/com/axini/smartdooradapter/.`. The AMP related code is stored in the subdirectory `./generic` and can be used as-is for **any** Java plugin adapter. All SUT specific code (in this case for the SmartDoor SUT) is stored in `./smartdoor` and should be modified for any new SUT.
+
+
 # Current limitations
 
 - Documentation is lacking. No javadoc comments for methods.

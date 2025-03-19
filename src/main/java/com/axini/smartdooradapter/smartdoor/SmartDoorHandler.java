@@ -1,4 +1,4 @@
-package com.axini.smartdooradapter;
+package com.axini.smartdooradapter.smartdoor;
 
 import java.util.*;
 
@@ -13,6 +13,8 @@ import PluginAdapter.Api.ConfigurationOuterClass.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.axini.smartdooradapter.generic.*;
 
 // SmartDoorHandler: SUT specific implementation of Handler.
 public class SmartDoorHandler extends Handler {
