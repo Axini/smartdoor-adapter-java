@@ -85,10 +85,21 @@ public class SmartDoorHandler extends Handler {
     // Stimulate the System Under Test with the stimulus.
     // Return the physical label.
     public ByteString stimulate(Label stimulus) {
-        logger.info("Sending stimulus to SUT: " + stimulus.getLabel());
+        logger.info("Handling stimulus: '" + stimulus.getLabel() + "'.");
+
         String sutMessage = labelToSutMessage(stimulus);
+
+        // Send confirmation of stimulus back to AMP
+        ByteString physicalLabel = ByteString.copyFromUtf8(sutMessage);
+        long timestamp = AxiniProtobuf.timestamp();
+        Label confirmation = AxiniProtobuf.createLabel(stimulus,
+            physicalLabel, timestamp, stimulus.getCorrelationId());
+        adapterCore.sendStimulusConfirmation(confirmation);
+
+        logger.info("Injecting stimulus into the SUT: " + sutMessage);
         connection.send(sutMessage);
-        return ByteString.copyFromUtf8(sutMessage);
+
+        return physicalLabel;
     }
 
     // Send a response to AMP.

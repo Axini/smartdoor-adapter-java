@@ -42,9 +42,11 @@ public class Adapter {
         String url   = args[1];
         String token = args[2];
 
+        String abbr_token = token.substring(0, Math.min(token.length(), 40));
+
         logger.info("name:  " + name);
         logger.info("url:   " + url);
-        logger.info("token: " + token);
+        logger.info("token: " + abbr_token + "...");
 
         runTest(name, url, token);
     }

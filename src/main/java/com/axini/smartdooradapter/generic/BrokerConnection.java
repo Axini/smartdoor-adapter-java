@@ -61,7 +61,7 @@ public class BrokerConnection {
 
             @Override
             public void onMessage(ByteBuffer bytes) {
-                adapterCore.handleMessage(bytes);
+                adapterCore.handleMessageFromAmp(bytes);
             }
 
             @Override

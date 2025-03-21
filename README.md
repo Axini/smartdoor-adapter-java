@@ -83,6 +83,17 @@ The file `./main/resources/simplelogger.properties` contains the (formatting) se
 
 The source code of the adapter can be found in the subdirectory `src/main/java/com/axini/smartdooradapter/.`. The AMP related code is stored in the subdirectory `./generic` and can be used as-is for **any** Java plugin adapter. All SUT specific code (in this case for the SmartDoor SUT) is stored in `./smartdoor` and should be modified for any new SUT.
 
+## Threads
+The main thread of the adapter ensures that messages from AMP are received and handled. The `SmartdoorConnection` class (in `./smartdoor`) starts a separate thread which is used for the messages from the SmartDoor SUT over the WebSocket connection between the SUT and the adapter. 
+
+The class `QThread` (in `./generic`) manages a Queue of items and a Thread. Items can be added to the Queue and the Thread processes items from the queue in a FIFO manner. The Queue can also be emptied. The plugin adapter (class `AdapterCore` in `./generic`) uses two QThreads for (i) handling messages from AMP and (ii) sending messages to AMP. This ensures that messages from AMP (stimuli) and the SUT (responses) are serviced immediately: any resulting message is added to a queue of pending messages which is processed by either one of the two QThreads.
+
+Using a separate QThread for sending the responses to AMP ensures that only a single WebSocket message can be in transit to AMP. 
+
+The QThread for the messages from AMP (Configuration, Ready, stimuli) is needed for a different reason. The processing of actual ProtoBuf messages from AMP may take some (considerable) time. For instance, after a Configuration message, the SUT has to be started and after a Reset message the SUT has to be reset to its initial state. And even the handling of a stimulus at the SUT may take some time. The WebSocket library is single threaded which means that as long as the BrokerConnection's `onMessage` method is being executed, the websocket library cannot handle any new WebSocket message from AMP, including heartbeat (ping) messages. Therefore, the AdapterCore uses a separate QThread to handle ProtoBuf messages from AMP. When a ProtoBuf message is received from AMP, the `onMessage` method calls the AdapterCore's `handleMessageFromAmp` method which only adds this message to the queue of pending messages. This ensures that the WebSocket thread is always ready to react on new WebSocket messages from AMP.
+
+The plugin adapter and all its threads are set to run forever. No code is added to gracefully terminate the adapter and its threads. Consequently, when terminating the adapter with Ctrl-C, you may observe several Exceptions on the stderr. This is harmless, though.
+
 
 # Current limitations
 

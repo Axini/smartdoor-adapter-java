@@ -29,16 +29,26 @@ public class AdapterCore {
     private Handler handler;
     private State state;
 
+    private QThread<Message>  qthread_to_amp;
+    private QThread<Message>  qthread_handle_message;
+
     public AdapterCore(String name, BrokerConnection brokerConnection, Handler handler) {
         this.name = name;
         this.brokerConnection = brokerConnection;
         this.handler = handler;
         this.state = State.DISCONNECTED;
+
+        this.qthread_to_amp =
+            new QThread<Message>(item -> sendMessage(item));
+        this.qthread_handle_message =
+            new QThread<Message>(item -> handleMessage(item));
     }
 
     // Start the AdapterCore.
     // * let the BrokerConnection connect to AMP.
     public void start() {
+        clearQThreadQueues();
+
         if (state == State.DISCONNECTED) {
             logger.info("Connecting to AMP's broker.");
             brokerConnection.connect();
@@ -54,7 +64,7 @@ public class AdapterCore {
     public void onOpen() {
         if (state == State.DISCONNECTED) {
             state = State.CONNECTED;
-            logger.info("Announcing.");
+            logger.info("Announcing adapter to AMP.");
 
             List<Label> supportedLabels = handler.getSupportedLabels();
             Configuration configuration = handler.getConfiguration();
@@ -72,6 +82,7 @@ public class AdapterCore {
     // * stop the handler
     public void onClose(int code, String reason, boolean remote) {
         state = State.DISCONNECTED;
+        clearQThreadQueues();
 
         String message = "Connection closed with code " + code +
                          " and reason: " + reason + ".";
@@ -115,10 +126,9 @@ public class AdapterCore {
     public void onLabel(Label label, long correlationId) {
         if (state == State.READY) {
             // We do not check that the label is a stimulus.
+            logger.info("Forwarding label '" + label.getLabel() + "' to Handler object.");
             ByteString physicalLabel = handler.stimulate(label);
-            long timestamp = AxiniProtobuf.timestamp();
-            sendStimulus(label, physicalLabel, timestamp, correlationId);
-
+            // The handler should send the stimulus confirmation.
         } else {
             String message = "Label received from AMP while not ready.";
             logger.info(message);
@@ -131,6 +141,8 @@ public class AdapterCore {
     // * send ready to AMP (should be done by handler).
     public void onReset() {
         if (state == State.READY) {
+            logger.info("Resetting the connection with the SUT.");
+            clearQThreadQueues();
             handler.reset();
             // The handler should call sendReady() as it knows when it is ready.
 
@@ -151,19 +163,37 @@ public class AdapterCore {
         brokerConnection.close(1000, message); // 1000 is normal closure...
     }
 
-    // Parse the ByteBuffer message from AMP to a Protobuf message and call
-    // the appropriate method of this AdapterCore.
-    public void handleMessage(ByteBuffer bytes) {
-        Message msg = null;
+    public void handleMessageFromAmp(ByteBuffer bytes) {
+        logger.info("Received message from AMP.");
 
+        // Parse the ByteBuffer message from AMP to a Protobuf message
+        // add this message to the queue to be handled.
+
+        Message msg = null;
         try {
             msg = Message.parseFrom(bytes.array());
         } catch (InvalidProtocolBufferException ex) {
             logger.error("InvalidProtocolBufferException: " + ex.getMessage());
         }
 
+        logger.info("Added message " + messageToString(msg) +
+                    " to the QThread to be handled.");
+        qthread_handle_message.add(msg);
+    }
+
+    // Confirm a received stimulus by sending it back to AMP.
+    // TODO: check that the label is indeed a stimulus.
+    public void sendStimulusConfirmation(Label confirmation) {
+        logger.info("Sending stimulus back to AMP: '" + confirmation.getLabel() + "'.");
+        sendLabel(confirmation);
+    }
+
+    private void handleMessage(Message msg) {
+        logger.info("Processing message " + messageToString(msg) +
+                    " from the queue from AMP.");
+
         if (msg.hasConfiguration()) {
-            logger.info("Configuration received from AMP");
+            logger.info("Configuration received from AMP.");
             Configuration configuration = msg.getConfiguration();
             onConfiguration(configuration);
         }
@@ -171,32 +201,32 @@ public class AdapterCore {
         else if (msg.hasLabel()) {
             Label label = msg.getLabel();
             // two extra spaces to allign log with SmartDoorConnection
-            logger.info("Label received from AMP: " + label.getLabel());
+            logger.info("Label received from AMP: '" + label.getLabel() + "'.");
             long correlation_id = label.getCorrelationId();
             onLabel(label, correlation_id);
         }
 
         else if (msg.hasError()) {
             String error_msg = msg.getError().getMessage();
-            logger.info("Error received from AMP: " + error_msg);
+            logger.info("Error received from AMP: " + error_msg + ".");
             onError(error_msg);
         }
 
         else if (msg.hasReset()) {
-            logger.info("Reset received from AMP");
+            logger.info("Reset received from AMP.");
             onReset();
         }
 
         else if (msg.hasAnnouncement()) {
-            logger.error("Message type 'Announcement' not supported");
+            logger.error("Message type 'Announcement' from AMP not supported.");
         }
 
         else if (msg.hasReady()) {
-            logger.error("Message type 'Ready' not supported");
+            logger.error("Message type 'Ready' from AMP not supported.");
         }
 
         else {
-            logger.error("Unknown message type");
+            logger.error("Unknown message type.");
         }
     }
 
@@ -204,7 +234,7 @@ public class AdapterCore {
     // We do not check whether the label is actual a response.
     public void sendResponse(Label label, ByteString physicalLabel,
                              long timestamp) {
-        logger.info("Sending response to AMP: " + label.getLabel());
+        logger.info("Sending response to AMP: '" + label.getLabel() + "'.");
         Label new_label =
             AxiniProtobuf.createLabel(label, physicalLabel, timestamp);
         sendLabel(new_label);
@@ -213,7 +243,7 @@ public class AdapterCore {
     // Send ready message to AMP.
     public void sendReady() {
         logger.info("Sending Ready to AMP.");
-        sendMessage(AxiniProtobuf.createMsgReady());
+        queueMessageToAmp(AxiniProtobuf.createMsgReady());
         state = State.READY;
     }
 
@@ -221,24 +251,14 @@ public class AdapterCore {
     public void sendError(String errorMessage) {
         logger.info("Sending Error to AMP and closing the connection.");
         Message message = AxiniProtobuf.createMsgError(errorMessage);
-        sendMessage(message);
+        queueMessageToAmp(message);
         brokerConnection.close(1000, errorMessage); // 1000 is normal closure
     }
 
-    // Send stimulus to AMP.
-    // We do not check that the label is a stimulus.
-    private void sendStimulus(Label label, ByteString physicalLabel,
-                              long timestamp, long correlationId) {
-        logger.info("Sending stimulus (back) to AMP: " + label.getLabel());
-        Label new_label = AxiniProtobuf.createLabel(label, physicalLabel,
-                                                    timestamp, correlationId);
-        sendLabel(new_label);
-    }
-
     private void sendLabel(Label label) {
-        // logger.info("Sending label to AMP: " + label.getLabel());
+        // logger.info("Sending label to AMP: " + label.getLabel() + ".");
         Message message = AxiniProtobuf.createMsgLabel(label);
-        sendMessage(message);
+        queueMessageToAmp(message);
     }
 
     // Send announcement to AMP.
@@ -246,12 +266,46 @@ public class AdapterCore {
                                   Configuration configuration) {
         Message message = AxiniProtobuf.createMsgAnnouncement(name,
                                             supportedLabels, configuration);
-        sendMessage(message);
+        queueMessageToAmp(message);
     }
 
     // Send a Protobuf Message as a byte[] to AMP.
     private void sendMessage(Message message) {
+        logger.info("Sending message to AMP: " + messageToString(message) + ".");
         byte[] bytes = message.toByteArray();
         brokerConnection.send(bytes);
+    }
+
+    // Adds message to the queue of pending messages to AMP.
+    private void queueMessageToAmp(Message message) {
+        logger.info("Adding " + messageToString(message) + " to the QThread to AMP.");
+        qthread_to_amp.add(message);
+    }
+
+    // Clear the queues of the QThread objects.
+    private void clearQThreadQueues() {
+        logger.info("Clearing queues with pending messages.");
+        qthread_to_amp.clear_queue();
+        qthread_handle_message.clear_queue();
+    }
+
+    // Return a String representation of a Message object.
+    private String messageToString(Message msg) {
+        if (msg.hasLabel()) {
+            Label label = msg.getLabel();
+            return "Label '" + label.getLabel() + "'";
+        } else if (msg.hasConfiguration()) {
+            return "Configuration";
+        } else if (msg.hasError()) {
+            return "Error";
+        } else if (msg.hasReset()) {
+            return "Reset";
+        } else if (msg.hasAnnouncement()) {
+            return "Announcement";
+        } else if (msg.hasReady()) {
+            return "Ready";
+        } else {
+            return "?? UNKNOWN MESSAGE";
+        }
     }
 }
