@@ -10,7 +10,12 @@ The software is distributed under the MIT license, see LICENSE.txt.
 
 
 # Building the application - Maven
-NOTE: The current implementation is based on Java 11, this can be updated in the pom file:
+The Java application has been organized as a Maven application (https://maven.apache.org). The Java source files of the application reside in the following directory:
+`./src/main/java/com/axini/smartdooradapter`.
+
+Maven's `pom.xml` defines all external dependencies and plugins to build a single jar archive including all external jars.
+
+The current implementation is based on Java 11, this can be updated in the following pom file property:
 
 ```java
   <properties>
@@ -20,10 +25,7 @@ NOTE: The current implementation is based on Java 11, this can be updated in the
   </properties>
 ```
 
-The Java application has been organized as a Maven application (https://maven.apache.org). The Java source files of the application reside in the following directory:
-`./src/main/java/com/axini/smartdooradapter`.
-
-Maven's `pom.xml` defines all external dependencies and plugins to build a single jar archive including all external jars.
+Make sure your maven version and Java version are in sync. The `$JAVA_HOME` env variable can be used to check this.
 
 ## Installing Protobuf's `protoc` compiler
 
