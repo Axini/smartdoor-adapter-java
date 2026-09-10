@@ -3,15 +3,12 @@
 # Convenience script to start the SmartDoor adapter.
 
 JAVA=/usr/bin/java
-VERSION=0.1
+VERSION=0.1.1
 JAR_FILE=smartdoor-adapter-${VERSION}-jar-with-dependencies.jar
 
-# The adapter should connect to a server running AMP, announce itself with a
-# name, and supply a valid adapter token. You should fill in your own adapter
-# configuration here.
-
-NAME=smartdoor-adapter-java@machine_name
-URL=wss://course02.axini.com:443/adapters
-TOKEN=adapter-token-from-AMP-adapter-page
+HOSTNAME=$(hostname)
+NAME=smartdoor-adapter-java@${HOSTNAME}
+URL=
+TOKEN=
 
 $JAVA -jar ./target/${JAR_FILE} $NAME $URL $TOKEN

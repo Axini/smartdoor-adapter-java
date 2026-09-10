@@ -1,22 +1,18 @@
 package com.axini.smartdooradapter.generic;
 
-import java.util.*;
+import java.util.List;
 
 import java.nio.ByteBuffer;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
-import PluginAdapter.Api.MessageOuterClass.*;
-import PluginAdapter.Api.AnnouncementOuterClass.*;
-import PluginAdapter.Api.ConfigurationOuterClass.*;
-import PluginAdapter.Api.LabelOuterClass.*;
-import PluginAdapter.Api.LabelOuterClass.Label.*;
+import PluginAdapter.Api.MessageOuterClass.Message;
+import PluginAdapter.Api.ConfigurationOuterClass.Configuration;
+import PluginAdapter.Api.LabelOuterClass.Label;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.axini.smartdooradapter.smartdoor.*;
 
 // AdapterCore: keeps state of the adapter.
 public class AdapterCore {
@@ -29,8 +25,8 @@ public class AdapterCore {
     private Handler handler;
     private State state;
 
-    private QThread<Message>  qthread_to_amp;
-    private QThread<Message>  qthread_handle_message;
+    private QThread<Message>  qthreadToAmp;
+    private QThread<Message>  qthreadHandleMessage;
 
     public AdapterCore(String name, BrokerConnection brokerConnection, Handler handler) {
         this.name = name;
@@ -38,9 +34,9 @@ public class AdapterCore {
         this.handler = handler;
         this.state = State.DISCONNECTED;
 
-        this.qthread_to_amp =
+        this.qthreadToAmp =
             new QThread<Message>(item -> sendMessage(item));
-        this.qthread_handle_message =
+        this.qthreadHandleMessage =
             new QThread<Message>(item -> handleMessage(item));
     }
 
@@ -178,7 +174,7 @@ public class AdapterCore {
 
         logger.info("Added message " + messageToString(msg) +
                     " to the QThread to be handled.");
-        qthread_handle_message.add(msg);
+        qthreadHandleMessage.add(msg);
     }
 
     // Confirm a received stimulus by sending it back to AMP.
@@ -202,14 +198,14 @@ public class AdapterCore {
             Label label = msg.getLabel();
             // two extra spaces to allign log with SmartDoorConnection
             logger.info("Label received from AMP: '" + label.getLabel() + "'.");
-            long correlation_id = label.getCorrelationId();
-            onLabel(label, correlation_id);
+            long correlationId = label.getCorrelationId();
+            onLabel(label, correlationId);
         }
 
         else if (msg.hasError()) {
-            String error_msg = msg.getError().getMessage();
-            logger.info("Error received from AMP: " + error_msg + ".");
-            onError(error_msg);
+            String errorMsg = msg.getError().getMessage();
+            logger.info("Error received from AMP: " + errorMsg + ".");
+            onError(errorMsg);
         }
 
         else if (msg.hasReset()) {
@@ -235,9 +231,9 @@ public class AdapterCore {
     public void sendResponse(Label label, ByteString physicalLabel,
                              long timestamp) {
         logger.info("Sending response to AMP: '" + label.getLabel() + "'.");
-        Label new_label =
+        Label newLabel =
             AxiniProtobuf.createLabel(label, physicalLabel, timestamp);
-        sendLabel(new_label);
+        sendLabel(newLabel);
     }
 
     // Send ready message to AMP.
@@ -279,14 +275,14 @@ public class AdapterCore {
     // Adds message to the queue of pending messages to AMP.
     private void queueMessageToAmp(Message message) {
         logger.info("Adding " + messageToString(message) + " to the QThread to AMP.");
-        qthread_to_amp.add(message);
+        qthreadToAmp.add(message);
     }
 
     // Clear the queues of the QThread objects.
     private void clearQThreadQueues() {
         logger.info("Clearing queues with pending messages.");
-        qthread_to_amp.clear_queue();
-        qthread_handle_message.clear_queue();
+        qthreadToAmp.clearQueue();
+        qthreadHandleMessage.clearQueue();
     }
 
     // Return a String representation of a Message object.

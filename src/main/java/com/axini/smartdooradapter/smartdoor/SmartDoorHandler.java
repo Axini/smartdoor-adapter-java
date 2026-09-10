@@ -1,20 +1,21 @@
 package com.axini.smartdooradapter.smartdoor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import com.google.protobuf.ByteString;
 
-import PluginAdapter.Api.LabelOuterClass.*;
-import PluginAdapter.Api.LabelOuterClass.Label.*;
-import PluginAdapter.Api.ConfigurationOuterClass.*;
+import PluginAdapter.Api.LabelOuterClass.Label;
+import PluginAdapter.Api.ConfigurationOuterClass.Configuration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.axini.smartdooradapter.generic.*;
+import com.axini.smartdooradapter.generic.AxiniProtobuf;
+import com.axini.smartdooradapter.generic.Handler;
 
 // SmartDoorHandler: SUT specific implementation of Handler.
 public class SmartDoorHandler extends Handler {
@@ -200,25 +201,25 @@ public class SmartDoorHandler extends Handler {
     private static String labelToSutMessage(Label label) {
         String name = label.getLabel();
         List<Label.Parameter> params;
-        String sut_label = name.toUpperCase();
+        String sutLabel = name.toUpperCase();
         String result = null;
         switch (name) {
             case "open":
             case "close":
-                result = sut_label;
+                result = sutLabel;
                 break;
             case "lock":
             case "unlock":
                 params = label.getParametersList();
                 long passcode = params.get(0).getValue().getInteger();
-                result = sut_label + ":" + passcode;
+                result = sutLabel + ":" + passcode;
                 break;
             case "reset":
-                result = sut_label;
+                result = sutLabel;
                 break;
             default:
                 // This allows to send bad weather stimuli to the SUT.
-                result = sut_label;
+                result = sutLabel;
                 break;
         }
         return result;

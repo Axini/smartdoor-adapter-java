@@ -1,14 +1,15 @@
 package com.axini.smartdooradapter.generic;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 import com.google.protobuf.ByteString;
 
-import PluginAdapter.Api.MessageOuterClass.*;
-import PluginAdapter.Api.AnnouncementOuterClass.*;
-import PluginAdapter.Api.ConfigurationOuterClass.*;
-import PluginAdapter.Api.LabelOuterClass.*;
-import PluginAdapter.Api.LabelOuterClass.Label.*;
+import PluginAdapter.Api.MessageOuterClass.Message;
+import PluginAdapter.Api.AnnouncementOuterClass.Announcement;
+import PluginAdapter.Api.ConfigurationOuterClass.Configuration;
+import PluginAdapter.Api.LabelOuterClass.Label;
+import PluginAdapter.Api.LabelOuterClass.Label.LabelType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +66,7 @@ public class AxiniProtobuf {
             .setLabel(name)
             .setChannel(channel);
 
-        for (Label.Parameter param : safe_p(params))
+        for (Label.Parameter param : safeParams(params))
             builder.addParameters(param);
 
         Label label = builder.build();
@@ -183,7 +184,7 @@ public class AxiniProtobuf {
     public static Configuration createConfiguration(List<Configuration.Item> items) {
         Configuration.Builder builder = Configuration.newBuilder();
 
-        for (Configuration.Item item : safe_i(items))
+        for (Configuration.Item item : safeItems(items))
             builder.addItems(item);
 
         return builder.build();
@@ -244,7 +245,7 @@ public class AxiniProtobuf {
             .setName(name)
             .setConfiguration(configuration);
 
-        for (Label label : safe_l(supportedLabels))
+        for (Label label : safeLabels(supportedLabels))
             builder.addLabels(label);
 
         Announcement announcement = builder.build();
@@ -256,18 +257,18 @@ public class AxiniProtobuf {
 
     // ----- private methods
 
-    // We cannot overload the methods "safe_l" and "safe_p" to a single "safe"
-    // due to the limitations of Java generics.
+    // We cannot overload the methods "safeLabels" and "safeParams" to a single
+    // "safe" due to the limitations of Java generics.
 
-    private static List<Label> safe_l(List<Label> list) {
+    private static List<Label> safeLabels(List<Label> list) {
         return list == null ? EMPTY_LABEL_LIST : list;
     }
 
-    private static List<Label.Parameter> safe_p(List<Label.Parameter> list) {
+    private static List<Label.Parameter> safeParams(List<Label.Parameter> list) {
         return list == null ? EMPTY_PARAM_LIST : list;
     }
 
-    private static List<Configuration.Item> safe_i(List<Configuration.Item> list) {
+    private static List<Configuration.Item> safeItems(List<Configuration.Item> list) {
         return list == null ? EMPTY_ITEM_LIST : list;
     }
 }

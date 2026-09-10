@@ -6,8 +6,10 @@ import java.net.URISyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.axini.smartdooradapter.generic.*;
-import com.axini.smartdooradapter.smartdoor.*;
+import com.axini.smartdooradapter.generic.AdapterCore;
+import com.axini.smartdooradapter.generic.BrokerConnection;
+import com.axini.smartdooradapter.generic.Handler;
+import com.axini.smartdooradapter.smartdoor.SmartDoorHandler;
 
 // Adapter: starts the BrokerConnection and AdapterCore.
 public class Adapter {
@@ -42,11 +44,11 @@ public class Adapter {
         String url   = args[1];
         String token = args[2];
 
-        String abbr_token = token.substring(0, Math.min(token.length(), 40));
+        String abbrToken = token.substring(0, Math.min(token.length(), 40));
 
         logger.info("name:  " + name);
         logger.info("url:   " + url);
-        logger.info("token: " + abbr_token + "...");
+        logger.info("token: " + abbrToken + "...");
 
         runTest(name, url, token);
     }

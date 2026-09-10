@@ -63,7 +63,7 @@ public class QThread<T> {
     }
 
     // Clears all items from the queue.
-    public void clear_queue() {
+    public void clearQueue() {
         mutex.lock();
         try {
             queue.clear();
