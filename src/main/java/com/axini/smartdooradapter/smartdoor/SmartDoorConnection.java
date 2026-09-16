@@ -1,19 +1,12 @@
 package com.axini.smartdooradapter.smartdoor;
 
-import java.util.*;
-
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.drafts.Draft;
-import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.handshake.ServerHandshake;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.axini.smartdooradapter.generic.*;
 
 // SmartDoorConnection: WebSocket connection to the SmartDoor SUT.
 public class SmartDoorConnection extends WebSocketClient {

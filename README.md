@@ -8,7 +8,6 @@ The organization and architecture of the Java adapter is strongly based on Axini
 
 The software is distributed under the MIT license, see LICENSE.txt.
 
-
 # Building the application - Maven
 The Java application has been organized as a Maven application (https://maven.apache.org). The Java source files of the application reside in the following directory:
 `./src/main/java/com/axini/smartdooradapter`.
@@ -17,7 +16,7 @@ Maven's `pom.xml` defines all external dependencies and plugins to build a singl
 
 The current implementation is based on Java 11, this can be updated in the following pom file property:
 
-```java
+```xml
   <properties>
     <maven.compiler.source>YOUR JAVA VERSION HERE</maven.compiler.source>
     <maven.compiler.target>YOUR JAVA VERSION HERE</maven.compiler.target>
@@ -32,30 +31,48 @@ Make sure your maven version and Java version are in sync. The `$JAVA_HOME` env 
 Most of the building of the adapter is taken care of by Maven, except for one task: installing [Protobuf](https://github.com/protocolbuffers/protobuf)'s `protoc` compiler. Given `.proto` descriptions, the `protoc` compiler generates Java source files to manipulate Protobuf messages.
 
 Maven's `pom.xml` uses the `protobuf-maven-plugin` plugin, which specifies the location of the `protoc` compiler:
-```
+
+```xml
 <configuration>
   <protocExecutable>/usr/local/bin/protoc</protocExecutable>
 </configuration>
 ```
+
 If the `protoc` compiler is installed in a different location, you have to modify the line above in `pom.xml`. Precompiled `protoc` binaries can be retrieved from [Protobuf releases](https://github.com/protocolbuffers/protobuf/releases).
 
 ## Building executable jar *with* external dependencies
 
 A single jar with all dependencies can be built with:
+
+```bash
+mvn compile assembly:single
 ```
-$ mvn compile assembly:single
-```
+
 This will generate the following jar archive:
-```
+
+```bash
 ./target/smartdoor-adapter-<version>-jar-with-dependencies.jar
 ```
+
 Where `<version>` is the version as specified in `pom.xml`. It is possible to rename the jar archive, of course.
 
 The adapter can now be started with:
+
+```bash
+java -jar ./target/smartdoor-adapter-<version>-jar-with-dependencies.jar <name> <url> <token>
+
 ```
-$ java -jar smartdoor-adapter-<version>-jar-with-dependencies.jar <name> <url> <token>
+
+Where `<name>` is the name the adapter announces itself with to AMP, `<url>` is the
+WebSocket URL of AMP's broker (e.g. `wss://<amp-host>/adapters`), and `<token>` is the
+API key generated in AMP.
+
+The shell script `adapter` eases the starting of the adapter: edit its `NAME`, `URL`, and
+`TOKEN` variables with your own values, then run:
+
+```bash
+./adapter
 ```
-The shell script `adapter` eases the starting of the adapter.
 
 ## Building executable jar without external libraries
 

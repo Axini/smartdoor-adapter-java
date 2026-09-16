@@ -1,20 +1,19 @@
 package com.axini.smartdooradapter.generic;
 
-import java.util.*;
+import java.util.List;
 
 import com.google.protobuf.ByteString;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import PluginAdapter.Api.LabelOuterClass.*;
-import PluginAdapter.Api.LabelOuterClass.Label.*;
-import PluginAdapter.Api.ConfigurationOuterClass.*;
+import PluginAdapter.Api.LabelOuterClass.Label;
+import PluginAdapter.Api.ConfigurationOuterClass.Configuration;
 
 // Domain specific adapter component. The class Handler contains all the
 // specific adapter methods which need to be implemented for a specific SUT.
 //
-// When a response is received from the SUT, the adapter_core.send_response
+// When a response is received from the SUT, the adapterCore.sendResponse
 // method should be called.
 //
 // Subclasses must provide all methods defined in this abstract superclass.
